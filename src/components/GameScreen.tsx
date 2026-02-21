@@ -382,6 +382,15 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
     const score = overrideScore ?? roundScore;
     const state = overrideState ?? gameState;
 
+    // ── Si le temps est écoulé, on remet la carte courante à la fin du deck ──
+    const currentCardStillInDeck = state.deck[currentCardIndex];
+    let finalDeck = [...state.deck];
+    if (currentCardStillInDeck && overrideScore === undefined) {
+      // Retire la carte de sa position actuelle et la met à la fin
+      finalDeck.splice(currentCardIndex, 1);
+      finalDeck.push(currentCardStillInDeck);
+    }
+
     const updatedTeams = state.teams.map((t, i) =>
       i === state.currentTeamIndex ? { ...t, score: t.score + score } : t
     );
@@ -401,7 +410,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         ? (state.currentPlayerIndex + 1) % settings.playersPerTeam
         : state.currentPlayerIndex;
 
-    if (state.deck.length === 0 || state.deck.length <= currentCardIndex + 1 - score) {
+    if (finalDeck.length === 0) {
       if (state.currentRound < 3) {
         const newDeck = [...state.usedCards].sort(() => Math.random() - 0.5);
         setGameState({
@@ -427,6 +436,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         teams: updatedTeams,
         currentTeamIndex: nextTeamIndex,
         currentPlayerIndex: nextPlayerIndex,
+        deck: finalDeck,
         roundScores: updatedRoundScores,
       });
       setCurrentCardIndex(0);
