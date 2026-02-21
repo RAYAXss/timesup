@@ -481,24 +481,24 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Player modal ──
   if (showPlayerModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center">
           <div className="mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto flex items-center justify-center mb-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4">
               <Users className="text-white" size={36} />
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">À ton tour !</h2>
-            <p className="text-lg sm:text-xl text-purple-600 font-semibold mb-1">{currentPlayer.name}</p>
+            <p className="text-lg sm:text-xl text-blue-600 font-semibold mb-1">{currentPlayer.name}</p>
             <p className="text-gray-600">{currentTeam.name}</p>
           </div>
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 mb-6">
+          <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-4 mb-6">
             <p className="text-sm text-gray-600 mb-2">Round {gameState.currentRound}/3</p>
             <p className="text-lg font-semibold text-gray-800">{getRoundName(gameState.currentRound)}</p>
             <p className="text-sm text-gray-600 mt-2">{gameState.deck.length} cartes restantes</p>
           </div>
           <button
             onClick={handleReady}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl active:scale-95 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl active:scale-95 transition-all duration-200"
           >
             Prêt !
           </button>
@@ -510,7 +510,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Countdown ──
   if (countdown !== null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center">
         <div className="text-white text-9xl font-bold animate-pulse">{countdown}</div>
       </div>
     );
@@ -519,7 +519,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Game ──
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-3 sm:p-4 flex flex-col"
+      className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 p-3 sm:p-4 flex flex-col"
       style={{ overscrollBehavior: 'none', touchAction: 'none' }}
     >
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 gap-3 sm:gap-4">
@@ -529,7 +529,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
           <div className="flex justify-between items-center mb-3">
             {/* Player */}
             <div className="flex items-center gap-2 min-w-0">
-              <Users className="text-purple-600 shrink-0" size={18} />
+              <Users className="text-blue-500 shrink-0" size={18} />
               <div className="min-w-0">
                 <p className="text-xs text-gray-500 leading-none truncate">{currentTeam.name}</p>
                 <p className="font-bold text-gray-800 leading-tight truncate">{currentPlayer.name}</p>
@@ -548,7 +548,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Trophy className="text-yellow-500" size={18} />
+                <Trophy className="text-yellow-400" size={18} />
                 <span className="text-xl sm:text-2xl font-black text-gray-800 tabular-nums">{roundScore}</span>
               </div>
             </div>
@@ -570,7 +570,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
                 className="flex-1 text-center py-1 rounded-xl text-xs font-semibold transition-all truncate px-1"
                 style={
                   index === gameState.currentTeamIndex
-                    ? { background: 'linear-gradient(135deg,#7c3aed,#db2777)', color: '#fff' }
+                    ? { background: 'linear-gradient(135deg,#facc15,#38bdf8,#2563eb)', color: '#fff' }
                     : { background: '#f3f4f6', color: '#6b7280' }
                 }
               >
@@ -600,7 +600,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         </div>
 
         {/* Footer info */}
-        <div className="text-center text-white/70 text-xs sm:text-sm pb-2">
+        <div className="text-center text-white/80 text-xs sm:text-sm pb-2">
           {gameState.deck.length} carte{gameState.deck.length > 1 ? 's' : ''} restante{gameState.deck.length > 1 ? 's' : ''}
           &nbsp;·&nbsp;
           <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-xs">←→</kbd> clavier aussi

@@ -81,21 +81,22 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg -500 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full">
-        <h1 className="text-5xl font-bold text-center mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-4xl w-full my-4">
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 bg-gradient-to-r from-yellow-500 to-blue-600 bg-clip-text text-transparent">
           Time's Up!
         </h1>
-        <p className="text-center text-gray-600 mb-8">Configurez votre partie</p>
+        <p className="text-center text-gray-600 mb-6 md:mb-8">Configurez votre partie</p>
 
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6">
+        <div className="space-y-5">
+          {/* ÉQUIPES */}
+          <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-4 md:p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Users className="text-purple-600" size={24} />
+              <Users className="text-yellow-500" size={24} />
               <h2 className="text-xl font-semibold text-gray-800">Équipes</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nombre d'équipes
@@ -105,10 +106,10 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
                     <button
                       key={num}
                       onClick={() => updateTeamCount(num)}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
                         numberOfTeams === num
-                          ? 'bg-purple-600 text-white shadow-lg scale-105'
-                          : 'bg-white text-gray-700 hover:bg-purple-100'
+                          ? 'bg-yellow-400 text-white shadow-lg scale-105'
+                          : 'bg-white text-gray-700 hover:bg-yellow-100 border border-gray-200'
                       }`}
                     >
                       {num}
@@ -126,10 +127,10 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
                     <button
                       key={num}
                       onClick={() => updatePlayersCount(num)}
-                      className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
                         playersPerTeam === num
-                          ? 'bg-pink-600 text-white shadow-lg scale-105'
-                          : 'bg-white text-gray-700 hover:bg-pink-100'
+                          ? 'bg-sky-400 text-white shadow-lg scale-105'
+                          : 'bg-white text-gray-700 hover:bg-sky-100 border border-gray-200'
                       }`}
                     >
                       {num}
@@ -139,9 +140,9 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Array.from({ length: numberOfTeams }).map((_, teamIndex) => (
-                <div key={teamIndex} className="bg-white rounded-xl p-4 shadow">
+                <div key={teamIndex} className="bg-white rounded-xl p-4 shadow border border-sky-100">
                   <h3 className="font-semibold text-gray-800 mb-3">
                     Équipe {teamIndex + 1}
                   </h3>
@@ -154,7 +155,7 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
                         onChange={(e) =>
                           updatePlayerName(teamIndex, playerIndex, e.target.value)
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-transparent text-base"
                         placeholder={`Joueur ${playerIndex + 1}`}
                       />
                     ))}
@@ -164,20 +165,21 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-pink-50 to-red-50 rounded-2xl p-6">
+          {/* DIFFICULTÉ */}
+          <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-2xl p-4 md:p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Target className="text-pink-600" size={24} />
+              <Target className="text-sky-500" size={24} />
               <h2 className="text-xl font-semibold text-gray-800">Difficulté</h2>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               {(['facile', 'moyen', 'difficile'] as Difficulty[]).map((diff) => (
                 <button
                   key={diff}
                   onClick={() => setDifficulty(diff)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium capitalize transition-all ${
+                  className={`flex-1 py-3 px-2 md:px-4 rounded-lg font-medium capitalize transition-all text-sm md:text-base ${
                     difficulty === diff
-                      ? 'bg-gradient-to-r from-pink-600 to-red-600 text-white shadow-lg scale-105'
-                      : 'bg-white text-gray-700 hover:bg-pink-100'
+                      ? 'bg-gradient-to-r from-sky-400 to-blue-600 text-white shadow-lg scale-105'
+                      : 'bg-white text-gray-700 hover:bg-sky-100 border border-gray-200'
                   }`}
                 >
                   {diff}
@@ -186,20 +188,21 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-6">
+          {/* TEMPS */}
+          <div className="bg-gradient-to-r from-blue-50 to-yellow-50 rounded-2xl p-4 md:p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Clock className="text-red-600" size={24} />
+              <Clock className="text-blue-600" size={24} />
               <h2 className="text-xl font-semibold text-gray-800">Temps par joueur</h2>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               {[30, 45, 60].map((time) => (
                 <button
                   key={time}
                   onClick={() => setTimePerPlayer(time)}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                  className={`flex-1 py-3 px-2 md:px-4 rounded-lg font-medium transition-all text-sm md:text-base ${
                     timePerPlayer === time
-                      ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg scale-105'
-                      : 'bg-white text-gray-700 hover:bg-red-100'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg scale-105'
+                      : 'bg-white text-gray-700 hover:bg-blue-100 border border-gray-200'
                   }`}
                 >
                   {time}s
@@ -208,9 +211,10 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
             </div>
           </div>
 
+          {/* BOUTON LANCER */}
           <button
             onClick={handleStart}
-            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
           >
             Lancer la partie 🎮
           </button>
