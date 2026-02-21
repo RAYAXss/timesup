@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Users, Clock, Target, BookOpen } from 'lucide-react';
 import { GameSettings, Team, Player, Difficulty } from '../types/game';
-import RulesModal from './RuleModal';
+import RulesModal from './RulesModal';
 
 interface SetupScreenProps {
   onStart: (settings: GameSettings, teams: Team[]) => void;
