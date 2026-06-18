@@ -226,74 +226,95 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
   }, [word]);
 
   return (
-    <div
-      ref={cardRef}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      className="relative cursor-grab active:cursor-grabbing"
-      style={{
-        willChange: 'transform, opacity',
-        // Désactive toute sélection de texte (tous navigateurs)
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-        msUserSelect: 'none',
-        // Coupe les actions touch natives (scroll, zoom, highlight)
-        touchAction: 'none',
-        WebkitTapHighlightColor: 'transparent',
-        // Désactive le callout iOS (long press menu)
-        WebkitTouchCallout: 'none',
-      } as React.CSSProperties}
-    >
-      {/* Success hint */}
+    <div className="flex flex-col gap-4 w-full">
+      {/* Card */}
       <div
-        className="hint-success pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-3xl"
+        ref={cardRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        className="relative cursor-grab active:cursor-grabbing"
         style={{
-          opacity: 0,
-          background: 'linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.04) 100%)',
-          border: '3px solid rgba(34,197,94,0.7)',
-          transition: 'opacity 0.1s',
-        }}
+          willChange: 'transform, opacity',
+          // Désactive toute sélection de texte (tous navigateurs)
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          // Coupe les actions touch natives (scroll, zoom, highlight)
+          touchAction: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          // Désactive le callout iOS (long press menu)
+          WebkitTouchCallout: 'none',
+        } as React.CSSProperties}
       >
-        <span className="text-green-500 font-black text-5xl tracking-tight drop-shadow">✓</span>
-      </div>
-
-      {/* Skip hint */}
-      <div
-        className="hint-skip pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-3xl"
-        style={{
-          opacity: 0,
-          background: 'linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.04) 100%)',
-          border: '3px solid rgba(239,68,68,0.7)',
-          transition: 'opacity 0.1s',
-        }}
-      >
-        <span className="text-red-500 font-black text-5xl tracking-tight drop-shadow">✗</span>
-      </div>
-
-      {/* Card body */}
-      <div
-        className="bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-center p-6 sm:p-10"
-        style={{
-          minHeight: 'min(56vh, 420px)',
-          maxHeight: 'min(60vh, 460px)',
-          width: '100%',
-        }}
-      >
-        <span className="text-xs font-semibold tracking-widest uppercase text-purple-500 bg-purple-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
-          Round {round} · {roundName}
-        </span>
-        <h2
-          className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 text-center leading-tight px-2"
-          style={{ fontFamily: "'Georgia', serif", letterSpacing: '-0.02em' }}
+        {/* Success hint */}
+        <div
+          className="hint-success pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-3xl"
+          style={{
+            opacity: 0,
+            background: 'linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.04) 100%)',
+            border: '3px solid rgba(34,197,94,0.7)',
+            transition: 'opacity 0.1s',
+          }}
         >
-          {word}
-        </h2>
-        <p className="mt-8 sm:mt-10 text-gray-300 text-xs sm:text-sm font-medium tracking-wide">
-          ← Passer &nbsp;&nbsp;|&nbsp;&nbsp; Trouvé →
-        </p>
+          <span className="text-green-500 font-black text-5xl tracking-tight drop-shadow">✓</span>
+        </div>
+
+        {/* Skip hint */}
+        <div
+          className="hint-skip pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-3xl"
+          style={{
+            opacity: 0,
+            background: 'linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(239,68,68,0.04) 100%)',
+            border: '3px solid rgba(239,68,68,0.7)',
+            transition: 'opacity 0.1s',
+          }}
+        >
+          <span className="text-red-500 font-black text-5xl tracking-tight drop-shadow">✗</span>
+        </div>
+
+        {/* Card body */}
+        <div
+          className="bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-center p-6 sm:p-10"
+          style={{
+            minHeight: 'min(56vh, 420px)',
+            maxHeight: 'min(60vh, 460px)',
+            width: '100%',
+          }}
+        >
+          <span className="text-xs font-semibold tracking-widest uppercase text-purple-500 bg-purple-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
+            Round {round} · {roundName}
+          </span>
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 text-center leading-tight px-2"
+            style={{ fontFamily: "'Georgia', serif", letterSpacing: '-0.02em' }}
+          >
+            {word}
+          </h2>
+          <p className="mt-8 sm:mt-10 text-gray-300 text-xs sm:text-sm font-medium tracking-wide">
+            ← Passer &nbsp;&nbsp;|&nbsp;&nbsp; Trouvé →
+          </p>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-3 justify-center">
+        <button
+          onClick={() => !disabled && flyOut('left', onSkip)}
+          disabled={disabled}
+          className="flex-1 max-w-[160px] bg-gradient-to-br from-red-500 to-red-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:shadow-xl active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ✗ Passer
+        </button>
+        <button
+          onClick={() => !disabled && flyOut('right', onSuccess)}
+          disabled={disabled}
+          className="flex-1 max-w-[160px] bg-gradient-to-br from-green-500 to-green-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:shadow-xl active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ✓ Trouvé
+        </button>
       </div>
     </div>
   );
