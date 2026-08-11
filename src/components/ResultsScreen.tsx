@@ -1,13 +1,21 @@
 import { Trophy, Medal, Home, TrendingUp } from 'lucide-react';
-import { Team } from '../types/game';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useGame } from '../context/GameContext';
 
-interface ResultsScreenProps {
-  teams: Team[];
-  roundScores: number[][];
-  onBackToMenu: () => void;
-}
+export default function ResultsScreen() {
+  const navigate = useNavigate();
+  const { results, reset } = useGame();
 
-export default function ResultsScreen({ teams, roundScores, onBackToMenu }: ResultsScreenProps) {
+  if (!results) {
+    return <Navigate to="/menu" replace />;
+  }
+
+  const { teams, roundScores } = results;
+  const onBackToMenu = () => {
+    reset();
+    navigate('/menu');
+  };
+
   const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
   const winner = sortedTeams[0];
 
@@ -34,11 +42,11 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 p-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="menu-bg min-h-screen p-4 py-8">
+      <div className="max-w-6xl mx-auto animate-rise-in">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 p-6 md:p-8 text-center">
-            <Trophy className="mx-auto mb-4 text-white" size={64} />
+          <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 p-6 md:p-8 text-center">
+            <Trophy className="mx-auto mb-4 text-white animate-pop-in" size={64} />
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Victoire !</h1>
             <p className="text-xl md:text-2xl text-white font-semibold">{winner.name}</p>
             <p className="text-3xl md:text-4xl font-bold text-white mt-4">{winner.score} points</p>
@@ -46,7 +54,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
 
           <div className="p-5 md:p-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-              <TrendingUp className="text-blue-600" size={32} />
+              <TrendingUp className="text-indigo-600" size={32} />
               Classement final
             </h2>
 
@@ -84,7 +92,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
             <div className="overflow-x-auto rounded-xl">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gradient-to-r from-yellow-100 to-sky-100">
+                  <tr className="bg-gradient-to-r from-indigo-100 to-fuchsia-100">
                     <th className="px-3 md:px-4 py-3 text-left font-semibold text-gray-800 rounded-tl-xl text-sm md:text-base">
                       Équipe
                     </th>
@@ -123,7 +131,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
                           </td>
                         );
                       })}
-                      <td className="px-3 md:px-4 py-3 text-center font-bold text-blue-600 text-sm md:text-base">
+                      <td className="px-3 md:px-4 py-3 text-center font-bold text-indigo-600 text-sm md:text-base">
                         {team.score}
                       </td>
                     </tr>
@@ -136,7 +144,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
 
         <button
           onClick={onBackToMenu}
-          className="w-full bg-white text-blue-600 py-4 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
+          className="w-full bg-white text-indigo-600 py-4 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
         >
           <Home size={24} />
           Retour au menu

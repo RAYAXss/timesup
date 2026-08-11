@@ -1,240 +1,290 @@
 import { useState } from 'react';
-import { Users, Clock, Target, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Clock, Target, BookOpen, Settings2, ChevronDown, Rocket, Check } from 'lucide-react';
 import { GameSettings, Team, Player, Difficulty } from '../types/game';
+import { PRESETS, Preset } from '../data/rounds';
+import { useGame } from '../context/GameContext';
 import RulesModal from './RulesModal';
 
-interface SetupScreenProps {
-  onStart: (settings: GameSettings, teams: Team[]) => void;
+/** Génère des noms de joueurs par défaut pour la config donnée, en conservant
+ *  autant que possible les noms déjà saisis. */
+function buildNames(teams: number, perTeam: number, existing: string[][] = []): string[][] {
+  return Array.from({ length: teams }, (_, t) =>
+    Array.from({ length: perTeam }, (_, p) =>
+      existing[t]?.[p] || `Joueur ${t * perTeam + p + 1}`
+    )
+  );
 }
 
-export default function SetupScreen({ onStart }: SetupScreenProps) {
+export default function SetupScreen() {
+  const navigate = useNavigate();
+  const { startGame } = useGame();
+
   const [numberOfTeams, setNumberOfTeams] = useState(2);
   const [playersPerTeam, setPlayersPerTeam] = useState(2);
   const [difficulty, setDifficulty] = useState<Difficulty>('moyen');
   const [timePerPlayer, setTimePerPlayer] = useState(30);
-  const [playerNames, setPlayerNames] = useState<string[][]>([
-    ['Joueur 1', 'Joueur 2'],
-    ['Joueur 3', 'Joueur 4'],
-  ]);
+  const [playerNames, setPlayerNames] = useState<string[][]>(buildNames(2, 2));
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
 
-  const updatePlayerName = (teamIndex: number, playerIndex: number, name: string) => {
-    const newNames = [...playerNames];
-    if (!newNames[teamIndex]) {
-      newNames[teamIndex] = [];
-    }
-    newNames[teamIndex][playerIndex] = name;
-    setPlayerNames(newNames);
+  // Toute modification manuelle « détache » le preset sélectionné.
+  const markCustom = () => setSelectedPreset(null);
+
+  const applyPreset = (preset: Preset) => {
+    setSelectedPreset(preset.id);
+    setNumberOfTeams(preset.numberOfTeams);
+    setPlayersPerTeam(preset.playersPerTeam);
+    setDifficulty(preset.difficulty);
+    setTimePerPlayer(preset.timePerPlayer);
+    setPlayerNames((prev) => buildNames(preset.numberOfTeams, preset.playersPerTeam, prev));
   };
 
-  const handleStart = () => {
-    const teams: Team[] = [];
-    for (let i = 0; i < numberOfTeams; i++) {
-      const players: Player[] = [];
-      for (let j = 0; j < playersPerTeam; j++) {
-        players.push({
-          id: i * playersPerTeam + j,
-          name: playerNames[i]?.[j] || `Joueur ${i * playersPerTeam + j + 1}`,
-          teamId: i,
-        });
-      }
-      teams.push({
-        id: i,
-        name: `Équipe ${i + 1}`,
-        score: 0,
-        players,
-      });
-    }
-
-    const settings: GameSettings = {
-      numberOfTeams,
-      playersPerTeam,
-      difficulty,
-      timePerPlayer,
-    };
-
-    onStart(settings, teams);
+  const updatePlayerName = (teamIndex: number, playerIndex: number, name: string) => {
+    setPlayerNames((prev) => {
+      const next = prev.map((t) => [...t]);
+      if (!next[teamIndex]) next[teamIndex] = [];
+      next[teamIndex][playerIndex] = name;
+      return next;
+    });
   };
 
   const updateTeamCount = (count: number) => {
+    markCustom();
     setNumberOfTeams(count);
-    const newNames = [...playerNames];
-    while (newNames.length < count) {
-      const teamIndex = newNames.length;
-      const teamPlayers = [];
-      for (let i = 0; i < playersPerTeam; i++) {
-        teamPlayers.push(`Joueur ${teamIndex * playersPerTeam + i + 1}`);
-      }
-      newNames.push(teamPlayers);
-    }
-    setPlayerNames(newNames);
+    setPlayerNames((prev) => buildNames(count, playersPerTeam, prev));
   };
 
   const updatePlayersCount = (count: number) => {
+    markCustom();
     setPlayersPerTeam(count);
-    const newNames = playerNames.map((team, teamIndex) => {
-      const newTeam = [...team];
-      while (newTeam.length < count) {
-        newTeam.push(`Joueur ${teamIndex * count + newTeam.length + 1}`);
-      }
-      return newTeam.slice(0, count);
-    });
-    setPlayerNames(newNames);
+    setPlayerNames((prev) => buildNames(numberOfTeams, count, prev));
   };
+
+  const handleStart = () => {
+    const teams: Team[] = Array.from({ length: numberOfTeams }, (_, i) => {
+      const players: Player[] = Array.from({ length: playersPerTeam }, (_, j) => ({
+        id: i * playersPerTeam + j,
+        name: playerNames[i]?.[j]?.trim() || `Joueur ${i * playersPerTeam + j + 1}`,
+        teamId: i,
+      }));
+      return { id: i, name: `Équipe ${i + 1}`, score: 0, players };
+    });
+
+    const settings: GameSettings = { numberOfTeams, playersPerTeam, difficulty, timePerPlayer };
+    startGame(settings, teams);
+    navigate('/game');
+  };
+
+  const summary = `${numberOfTeams} équipes · ${playersPerTeam} joueurs · ${difficulty} · ${timePerPlayer}s`;
 
   return (
     <>
-      {/* Modal règles */}
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-4xl w-full my-4">
+      <div className="menu-bg relative min-h-screen overflow-hidden flex items-center justify-center p-4">
+        {/* Blobs décoratifs */}
+        <div className="blob bg-amber-300 w-72 h-72 top-[-4rem] left-[-3rem]" />
+        <div className="blob bg-fuchsia-400 w-80 h-80 bottom-[-5rem] right-[-4rem]" style={{ animationDelay: '4s' }} />
 
-          {/* Titre + bouton règles */}
-          <div className="flex items-start justify-between mb-2 gap-3">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-yellow-500 to-blue-600 bg-clip-text text-transparent">
-              Time's Up!
+        <div className="relative w-full max-w-3xl my-6 animate-rise-in">
+          {/* En-tête */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-4 py-1.5 rounded-full text-white/90 text-xs font-semibold tracking-widest uppercase mb-4">
+              ⏳ Le jeu d'ambiance en 3 manches
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black text-white drop-shadow-lg tracking-tight">
+              Time's Up<span className="text-amber-300">!</span>
             </h1>
-            <button
-              onClick={() => setShowRules(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-sky-400 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold text-sm hover:shadow-lg active:scale-95 transition-all duration-200 shrink-0 mt-1"
-            >
-              <BookOpen size={18} />
-              <span className="hidden sm:inline">Règles du jeu</span>
-              <span className="sm:hidden">Règles</span>
-            </button>
           </div>
-          <p className="text-center text-gray-600 mb-6 md:mb-8">Configurez votre partie</p>
 
-          <div className="space-y-5">
-            {/* ÉQUIPES */}
-            <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Users className="text-yellow-500" size={24} />
-                <h2 className="text-xl font-semibold text-gray-800">Équipes</h2>
+          {/* Carte principale */}
+          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl p-5 sm:p-7">
+            {/* Barre d'actions */}
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Prêt à jouer ?</h2>
+                <p className="text-sm text-gray-500">Choisis une formule et lance-toi.</p>
               </div>
+              <button
+                onClick={() => setShowRules(true)}
+                className="flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-indigo-100 active:scale-95 transition-all shrink-0"
+              >
+                <BookOpen size={18} />
+                <span className="hidden sm:inline">Règles</span>
+              </button>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre d'équipes
-                  </label>
-                  <div className="flex gap-2">
-                    {[2, 3, 4].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => updateTeamCount(num)}
-                        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-                          numberOfTeams === num
-                            ? 'bg-yellow-400 text-white shadow-lg scale-105'
-                            : 'bg-white text-gray-700 hover:bg-yellow-100 border border-gray-200'
-                        }`}
-                      >
-                        {num}
-                      </button>
+            {/* Presets rapides */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 stagger">
+              {PRESETS.map((preset) => {
+                const active = selectedPreset === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyPreset(preset)}
+                    className={`relative text-left rounded-2xl p-4 border-2 transition-all active:scale-95 ${
+                      active
+                        ? 'border-indigo-500 bg-indigo-50 shadow-lg scale-[1.02]'
+                        : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-md'
+                    }`}
+                  >
+                    {active && (
+                      <span className="absolute top-3 right-3 bg-indigo-500 text-white rounded-full p-1">
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                    )}
+                    <div className="text-3xl mb-2">{preset.emoji}</div>
+                    <div className="font-bold text-gray-800">{preset.name}</div>
+                    <div className="text-xs text-gray-500 leading-snug mt-1">{preset.tagline}</div>
+                    <div className="text-[11px] font-semibold text-indigo-500 mt-2">
+                      {preset.numberOfTeams} éq. · {preset.timePerPlayer}s · {preset.difficulty}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Toggle personnalisation */}
+            <button
+              onClick={() => setShowCustom((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-xl px-4 py-3 transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <Settings2 size={18} />
+                Personnaliser les règles
+              </span>
+              <span className="flex items-center gap-2">
+                {!showCustom && <span className="text-xs text-gray-400 hidden sm:inline">{summary}</span>}
+                <ChevronDown size={18} className={`transition-transform ${showCustom ? 'rotate-180' : ''}`} />
+              </span>
+            </button>
+
+            {/* Config détaillée */}
+            {showCustom && (
+              <div className="mt-4 space-y-4 animate-fade-in">
+                {/* Équipes */}
+                <div className="bg-gradient-to-r from-indigo-50 to-sky-50 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="text-indigo-500" size={20} />
+                    <h3 className="font-semibold text-gray-800">Équipes & joueurs</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Nombre d'équipes</label>
+                      <div className="flex gap-2">
+                        {[2, 3, 4].map((num) => (
+                          <button
+                            key={num}
+                            onClick={() => updateTeamCount(num)}
+                            className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
+                              numberOfTeams === num
+                                ? 'bg-indigo-500 text-white shadow scale-105'
+                                : 'bg-white text-gray-700 hover:bg-indigo-100 border border-gray-200'
+                            }`}
+                          >
+                            {num}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Joueurs par équipe</label>
+                      <div className="flex gap-2">
+                        {[2, 3, 4].map((num) => (
+                          <button
+                            key={num}
+                            onClick={() => updatePlayersCount(num)}
+                            className={`flex-1 py-2.5 rounded-lg font-semibold transition-all ${
+                              playersPerTeam === num
+                                ? 'bg-sky-500 text-white shadow scale-105'
+                                : 'bg-white text-gray-700 hover:bg-sky-100 border border-gray-200'
+                            }`}
+                          >
+                            {num}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Array.from({ length: numberOfTeams }).map((_, teamIndex) => (
+                      <div key={teamIndex} className="bg-white rounded-xl p-3 shadow-sm border border-indigo-100">
+                        <h4 className="font-semibold text-gray-700 text-sm mb-2">Équipe {teamIndex + 1}</h4>
+                        <div className="space-y-2">
+                          {Array.from({ length: playersPerTeam }).map((_, playerIndex) => (
+                            <input
+                              key={playerIndex}
+                              type="text"
+                              value={playerNames[teamIndex]?.[playerIndex] || ''}
+                              onChange={(e) => updatePlayerName(teamIndex, playerIndex, e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-sm"
+                              placeholder={`Joueur ${playerIndex + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Joueurs par équipe
-                  </label>
+                {/* Difficulté */}
+                <div className="bg-gradient-to-r from-sky-50 to-fuchsia-50 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="text-sky-500" size={20} />
+                    <h3 className="font-semibold text-gray-800">Difficulté</h3>
+                  </div>
                   <div className="flex gap-2">
-                    {[2, 3, 4].map((num) => (
+                    {(['facile', 'moyen', 'difficile'] as Difficulty[]).map((diff) => (
                       <button
-                        key={num}
-                        onClick={() => updatePlayersCount(num)}
-                        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-                          playersPerTeam === num
-                            ? 'bg-sky-400 text-white shadow-lg scale-105'
+                        key={diff}
+                        onClick={() => { markCustom(); setDifficulty(diff); }}
+                        className={`flex-1 py-2.5 rounded-lg font-semibold capitalize transition-all text-sm ${
+                          difficulty === diff
+                            ? 'bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow scale-105'
                             : 'bg-white text-gray-700 hover:bg-sky-100 border border-gray-200'
                         }`}
                       >
-                        {num}
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Temps */}
+                <div className="bg-gradient-to-r from-fuchsia-50 to-amber-50 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="text-fuchsia-500" size={20} />
+                    <h3 className="font-semibold text-gray-800">Temps par joueur</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    {[30, 45, 60].map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => { markCustom(); setTimePerPlayer(time); }}
+                        className={`flex-1 py-2.5 rounded-lg font-semibold transition-all text-sm ${
+                          timePerPlayer === time
+                            ? 'bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white shadow scale-105'
+                            : 'bg-white text-gray-700 hover:bg-fuchsia-100 border border-gray-200'
+                        }`}
+                      >
+                        {time}s
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Array.from({ length: numberOfTeams }).map((_, teamIndex) => (
-                  <div key={teamIndex} className="bg-white rounded-xl p-4 shadow border border-sky-100">
-                    <h3 className="font-semibold text-gray-800 mb-3">
-                      Équipe {teamIndex + 1}
-                    </h3>
-                    <div className="space-y-2">
-                      {Array.from({ length: playersPerTeam }).map((_, playerIndex) => (
-                        <input
-                          key={playerIndex}
-                          type="text"
-                          value={playerNames[teamIndex]?.[playerIndex] || ''}
-                          onChange={(e) =>
-                            updatePlayerName(teamIndex, playerIndex, e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:border-transparent text-base"
-                          placeholder={`Joueur ${playerIndex + 1}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* DIFFICULTÉ */}
-            <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-2xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Target className="text-sky-500" size={24} />
-                <h2 className="text-xl font-semibold text-gray-800">Difficulté</h2>
-              </div>
-              <div className="flex gap-2 md:gap-3">
-                {(['facile', 'moyen', 'difficile'] as Difficulty[]).map((diff) => (
-                  <button
-                    key={diff}
-                    onClick={() => setDifficulty(diff)}
-                    className={`flex-1 py-3 px-2 md:px-4 rounded-lg font-medium capitalize transition-all text-sm md:text-base ${
-                      difficulty === diff
-                        ? 'bg-gradient-to-r from-sky-400 to-blue-600 text-white shadow-lg scale-105'
-                        : 'bg-white text-gray-700 hover:bg-sky-100 border border-gray-200'
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* TEMPS */}
-            <div className="bg-gradient-to-r from-blue-50 to-yellow-50 rounded-2xl p-4 md:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Clock className="text-blue-600" size={24} />
-                <h2 className="text-xl font-semibold text-gray-800">Temps par joueur</h2>
-              </div>
-              <div className="flex gap-2 md:gap-3">
-                {[30, 45, 60].map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => setTimePerPlayer(time)}
-                    className={`flex-1 py-3 px-2 md:px-4 rounded-lg font-medium transition-all text-sm md:text-base ${
-                      timePerPlayer === time
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg scale-105'
-                        : 'bg-white text-gray-700 hover:bg-blue-100 border border-gray-200'
-                    }`}
-                  >
-                    {time}s
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* BOUTON LANCER */}
+            {/* Bouton lancer */}
             <button
               onClick={handleStart}
-              className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+              className="mt-5 w-full flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:shadow-2xl hover:brightness-110 active:scale-[0.98] transition-all"
             >
-              Lancer la partie 🎮
+              <Rocket size={22} />
+              Lancer la partie
             </button>
           </div>
         </div>

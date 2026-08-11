@@ -16,7 +16,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 p-5 rounded-t-3xl flex items-center justify-between sticky top-0">
+        <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 p-5 rounded-t-3xl flex items-center justify-between sticky top-0">
           <div className="flex items-center gap-3">
             <BookOpen className="text-white" size={26} />
             <h2 className="text-2xl font-bold text-white">Règles du jeu</h2>
@@ -112,7 +112,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
           {/* Bouton fermer */}
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-xl active:scale-95 transition-all duration-200"
+            className="w-full bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-xl active:scale-95 transition-all duration-200"
           >
             C'est parti ! 🎮
           </button>

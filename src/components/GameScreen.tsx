@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Timer, Trophy, Users } from 'lucide-react';
 import { GameSettings, Team, Card, GameState } from '../types/game';
 import { cardDatabase } from '../data/cards';
+import { getRound } from '../data/rounds';
+import { useGame } from '../context/GameContext';
+import RoundIntro from './RoundIntro';
 
 interface GameScreenProps {
   settings: GameSettings;
@@ -322,7 +326,7 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
 
 // ─── GameScreen ───────────────────────────────────────────────────────────────
 
-export default function GameScreen({ settings, teams, onGameEnd }: GameScreenProps) {
+function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   const [gameState, setGameState] = useState<GameState>(() => {
     const totalPlayers = settings.numberOfTeams * settings.playersPerTeam;
     const deckSize = totalPlayers * 10;
@@ -342,6 +346,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   });
 
   const [showPlayerModal, setShowPlayerModal] = useState(true);
+  const [isNewRound, setIsNewRound] = useState(true);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(settings.timePerPlayer);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -447,6 +452,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         setCurrentCardIndex(0);
         setRoundScore(0);
         setTimeLeft(settings.timePerPlayer);
+        setIsNewRound(true);
         setShowPlayerModal(true);
       } else {
         onGameEnd(updatedTeams, updatedRoundScores);
@@ -463,6 +469,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
       setCurrentCardIndex(0);
       setRoundScore(0);
       setTimeLeft(settings.timePerPlayer);
+      setIsNewRound(false);
       setShowPlayerModal(true);
     }
   };
@@ -501,48 +508,34 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
 
   const getCardWord = () => {
     if (!currentCard) return '';
-    return (currentCard as any)[settings.difficulty] ?? currentCard.easy ?? '';
+    return currentCard[settings.difficulty] ?? currentCard.facile ?? '';
   };
 
-  const getRoundName = (round: number) => ['Description', 'Un seul mot', 'Mime'][round - 1] ?? `Round ${round}`;
+  const getRoundName = (round: number) => getRound(round).short;
 
   const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#6d28d9';
   const timerPct = timeLeft / settings.timePerPlayer;
 
-  // ── Player modal ──
+  // ── Écran d'intro de manche ──
   if (showPlayerModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center">
-          <div className="mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4">
-              <Users className="text-white" size={36} />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">À ton tour !</h2>
-            <p className="text-lg sm:text-xl text-blue-600 font-semibold mb-1">{currentPlayer.name}</p>
-            <p className="text-gray-600">{currentTeam.name}</p>
-          </div>
-          <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-4 mb-6">
-            <p className="text-sm text-gray-600 mb-2">Round {gameState.currentRound}/3</p>
-            <p className="text-lg font-semibold text-gray-800">{getRoundName(gameState.currentRound)}</p>
-            <p className="text-sm text-gray-600 mt-2">{gameState.deck.length} cartes restantes</p>
-          </div>
-          <button
-            onClick={handleReady}
-            className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl active:scale-95 transition-all duration-200"
-          >
-            Prêt !
-          </button>
-        </div>
-      </div>
+      <RoundIntro
+        roundInfo={getRound(gameState.currentRound)}
+        totalRounds={3}
+        playerName={currentPlayer.name}
+        teamName={currentTeam.name}
+        cardsRemaining={gameState.deck.length}
+        isNewRound={isNewRound}
+        onReady={handleReady}
+      />
     );
   }
 
   // ── Countdown ──
   if (countdown !== null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center">
-        <div className="text-white text-9xl font-bold animate-pulse">{countdown}</div>
+      <div className="game-bg min-h-screen flex items-center justify-center">
+        <div key={countdown} className="text-white text-9xl font-black animate-pop-in drop-shadow-lg">{countdown}</div>
       </div>
     );
   }
@@ -550,7 +543,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Game ──
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 p-3 sm:p-4 flex flex-col"
+      className="game-bg min-h-screen p-3 sm:p-4 flex flex-col"
       style={{ overscrollBehavior: 'none', touchAction: 'none' }}
     >
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 gap-3 sm:gap-4">
@@ -631,7 +624,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         </div>
 
         {/* Footer info */}
-        <div className="text-center text-white/80 text-xs sm:text-sm pb-2">
+        <div className="text-center text-white/70 text-xs sm:text-sm pb-2">
           {gameState.deck.length} carte{gameState.deck.length > 1 ? 's' : ''} restante{gameState.deck.length > 1 ? 's' : ''}
           &nbsp;·&nbsp;
           <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-xs">←→</kbd> clavier aussi
@@ -639,4 +632,25 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
       </div>
     </div>
   );
+}
+
+/**
+ * Wrapper de route : récupère la partie active depuis le contexte.
+ * Si aucune partie n'est en cours (accès direct à /game, rechargement…),
+ * on renvoie l'utilisateur vers le menu.
+ */
+export default function GameScreen() {
+  const { settings, teams, endGame } = useGame();
+  const navigate = useNavigate();
+
+  if (!settings || teams.length === 0) {
+    return <Navigate to="/menu" replace />;
+  }
+
+  const handleGameEnd = (finalTeams: Team[], roundScores: number[][]) => {
+    endGame(finalTeams, roundScores);
+    navigate('/results');
+  };
+
+  return <GameScreenInner settings={settings} teams={teams} onGameEnd={handleGameEnd} />;
 }
