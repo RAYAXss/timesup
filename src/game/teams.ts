@@ -30,6 +30,13 @@ export function removePlayer(teams: Team[], playerId: number): Team[] {
   return teams.map((t) => ({ ...t, players: t.players.filter((p) => p.id !== playerId) }));
 }
 
+export function renamePlayer(teams: Team[], playerId: number, name: string): Team[] {
+  return teams.map((t) => ({
+    ...t,
+    players: t.players.map((p) => (p.id === playerId ? { ...p, name } : p)),
+  }));
+}
+
 export function movePlayer(teams: Team[], playerId: number, toTeamId: number, toIndex?: number): Team[] {
   const player = teams.flatMap((t) => t.players).find((p) => p.id === playerId);
   if (!player) return teams;

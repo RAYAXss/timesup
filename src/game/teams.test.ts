@@ -3,6 +3,7 @@ import { Team } from '../types/game';
 import {
   addPlayer,
   removePlayer,
+  renamePlayer,
   movePlayer,
   addTeam,
   removeTeam,
@@ -116,5 +117,13 @@ describe('defaultTeams', () => {
     expect(sizes(t)).toEqual([2, 2]);
     expect(t[0].players[0].name).toBe('Joueur 1');
     expect(canStart(t)).toBe(true);
+  });
+});
+
+describe('renamePlayer', () => {
+  it('renames by id without trimming while typing', () => {
+    const out = renamePlayer(mk([['A'], ['B']]), 1, 'Bob ');
+    expect(out[1].players[0].name).toBe('Bob ');
+    expect(out[0].players[0].name).toBe('A');
   });
 });
