@@ -1,101 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Timer, Trophy, Users } from 'lucide-react';
-import { GameSettings, Team, Card, GameState } from '../types/game';
+import { GameSettings, Team, GameState } from '../types/game';
 import { cardDatabase } from '../data/cards';
+import { nextTurn } from '../game/teams';
+import { soundEngine } from '../game/sound';
 
 interface GameScreenProps {
   settings: GameSettings;
   teams: Team[];
   onGameEnd: (finalTeams: Team[], roundScores: number[][]) => void;
 }
-
-// ─── Web Audio Sound Engine ───────────────────────────────────────────────────
-
-function createSoundEngine() {
-  let ctx: AudioContext | null = null;
-
-  const getCtx = () => {
-    if (!ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return ctx;
-  };
-
-  const playSuccess = () => {
-    try {
-      const ac = getCtx();
-      // Joyful ascending arpeggio: C5 – E5 – G5
-      const notes = [523.25, 659.25, 783.99];
-      notes.forEach((freq, i) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ac.currentTime + i * 0.1);
-        gain.gain.setValueAtTime(0, ac.currentTime + i * 0.1);
-        gain.gain.linearRampToValueAtTime(0.25, ac.currentTime + i * 0.1 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.1 + 0.25);
-        osc.start(ac.currentTime + i * 0.1);
-        osc.stop(ac.currentTime + i * 0.1 + 0.3);
-      });
-    } catch (_) {}
-  };
-
-  const playSkip = () => {
-    try {
-      const ac = getCtx();
-      // Short descending "woosh"
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, ac.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ac.currentTime + 0.18);
-      gain.gain.setValueAtTime(0.15, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.2);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.22);
-    } catch (_) {}
-  };
-
-  const playTick = () => {
-    try {
-      const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(880, ac.currentTime);
-      gain.gain.setValueAtTime(0.08, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.07);
-    } catch (_) {}
-  };
-
-  const playTimeUp = () => {
-    try {
-      const ac = getCtx();
-      [440, 330].forEach((freq, i) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, ac.currentTime + i * 0.18);
-        gain.gain.setValueAtTime(0.18, ac.currentTime + i * 0.18);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.18 + 0.16);
-        osc.start(ac.currentTime + i * 0.18);
-        osc.stop(ac.currentTime + i * 0.18 + 0.18);
-      });
-    } catch (_) {}
-  };
-
-  return { playSuccess, playSkip, playTick, playTimeUp };
-}
-
-const soundEngine = createSoundEngine();
 
 // ─── Swipeable Card ──────────────────────────────────────────────────────────
 
@@ -324,7 +238,7 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
 
 export default function GameScreen({ settings, teams, onGameEnd }: GameScreenProps) {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const totalPlayers = settings.numberOfTeams * settings.playersPerTeam;
+    const totalPlayers = teams.reduce((n, t) => n + t.players.length, 0);
     const deckSize = totalPlayers * 10;
     const shuffledCards = [...cardDatabase]
       .sort(() => Math.random() - 0.5)
@@ -333,7 +247,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
     return {
       teams: teams.map((team) => ({ ...team, score: 0 })),
       currentTeamIndex: 0,
-      currentPlayerIndex: 0,
+      playerIdx: teams.map(() => 0),
       currentRound: 1,
       deck: shuffledCards,
       usedCards: [],
@@ -349,7 +263,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   const [roundScore, setRoundScore] = useState(0);
 
   const currentTeam = gameState.teams[gameState.currentTeamIndex];
-  const currentPlayer = currentTeam.players[gameState.currentPlayerIndex];
+  const currentPlayer = currentTeam.players[gameState.playerIdx[gameState.currentTeamIndex]];
   const currentCard = gameState.deck[currentCardIndex];
 
   // ── Block body scroll while game is active ────────────────────────────────
@@ -425,11 +339,11 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
       updatedRoundScores[state.currentRound - 1][state.currentTeamIndex] = score;
     }
 
-    const nextTeamIndex = (state.currentTeamIndex + 1) % settings.numberOfTeams;
-    const nextPlayerIndex =
-      nextTeamIndex === 0
-        ? (state.currentPlayerIndex + 1) % settings.playersPerTeam
-        : state.currentPlayerIndex;
+    const { teamIndex: nextTeamIndex, playerIdx: nextPlayerIdx } = nextTurn(
+      state.currentTeamIndex,
+      state.playerIdx,
+      state.teams
+    );
 
     if (finalDeck.length === 0) {
       if (state.currentRound < 3) {
@@ -438,7 +352,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
           ...state,
           teams: updatedTeams,
           currentTeamIndex: nextTeamIndex,
-          currentPlayerIndex: nextPlayerIndex,
+          playerIdx: nextPlayerIdx,
           currentRound: state.currentRound + 1,
           deck: newDeck,
           usedCards: [],
@@ -456,7 +370,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
         ...state,
         teams: updatedTeams,
         currentTeamIndex: nextTeamIndex,
-        currentPlayerIndex: nextPlayerIndex,
+        playerIdx: nextPlayerIdx,
         deck: finalDeck,
         roundScores: updatedRoundScores,
       });
@@ -501,7 +415,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
 
   const getCardWord = () => {
     if (!currentCard) return '';
-    return (currentCard as any)[settings.difficulty] ?? currentCard.easy ?? '';
+    return currentCard[settings.difficulty] ?? '';
   };
 
   const getRoundName = (round: number) => ['Description', 'Un seul mot', 'Mime'][round - 1] ?? `Round ${round}`;

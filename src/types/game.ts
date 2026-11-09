@@ -21,8 +21,6 @@ export interface Team {
 }
 
 export interface GameSettings {
-  numberOfTeams: number;
-  playersPerTeam: number;
   difficulty: Difficulty;
   timePerPlayer: number;
 }
@@ -30,9 +28,16 @@ export interface GameSettings {
 export interface GameState {
   teams: Team[];
   currentTeamIndex: number;
-  currentPlayerIndex: number;
+  playerIdx: number[]; // speaker index per team
   currentRound: number;
   deck: Card[];
   usedCards: Card[];
   roundScores: number[][];
+}
+
+export interface AppSettings {
+  soundOn: boolean;
+  volume: number; // 0..1
+  vibration: boolean;
+  animations: boolean;
 }
