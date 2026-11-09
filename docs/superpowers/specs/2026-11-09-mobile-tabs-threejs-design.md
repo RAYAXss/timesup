@@ -65,7 +65,7 @@ Choix de l'utilisateur : **A**, pour un rendu animé sans risque pour la lisibil
 
 ## Choix faits par l'assistant (à vérifier)
 
-- **Une seule mise en page pour toutes les tailles d'écran** : sur ordinateur, la même app à onglets s'affiche dans une colonne centrée (largeur max ~480 px) sur le fond 3D. On évite de maintenir deux interfaces.
+- **Ordinateur (décision utilisateur)** : on garde l'interface actuelle en page unique (titre + bouton Règles, équipes, difficulté, temps, Lancer), avec des retouches visuelles autorisées et le fond 3D. Les onglets et la barre du bas sont réservés au mobile (< 768 px, breakpoint `md` de Tailwind). Choix de l'assistant : les deux mises en page réutilisent les mêmes blocs (équipes en drag & drop, difficulté, temps, son), seule leur disposition change ; sur ordinateur, le bloc son apparaît en bas de la page unique.
 - **Paramètres (onglet droit)** : son on/off, volume, vibration au mot trouvé (Android ; masquée si `navigator.vibrate` n'existe pas), animations 3D on/off (pour les téléphones lents ; l'interface reste identique sans 3D). Sauvegardés dans `localStorage`.
 - **Réglages de partie et joueurs** sauvegardés dans `localStorage`, pour qu'on retrouve sa liste au prochain lancement.
 - **Pas de « banc »** : tout joueur appartient à une équipe. Un joueur ajouté va dans l'équipe la moins remplie. Supprimer une équipe renvoie ses joueurs dans les autres.
