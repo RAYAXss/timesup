@@ -426,7 +426,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Player modal ──
   if (showPlayerModal) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center">
           <div className="mb-6">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4">
@@ -455,7 +455,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Countdown ──
   if (countdown !== null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-white text-9xl font-bold animate-pulse">{countdown}</div>
       </div>
     );
@@ -464,7 +464,7 @@ export default function GameScreen({ settings, teams, onGameEnd }: GameScreenPro
   // ── Game ──
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 p-3 sm:p-4 flex flex-col"
+      className="min-h-screen p-3 sm:p-4 flex flex-col"
       style={{ overscrollBehavior: 'none', touchAction: 'none' }}
     >
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 gap-3 sm:gap-4">

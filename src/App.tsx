@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import SetupScreen from './components/SetupScreen';
 import GameScreen from './components/GameScreen';
 import ResultsScreen from './components/ResultsScreen';
 import { GameSettings, Team } from './types/game';
+
+// three.js is ~150 kB gzipped: load it after the UI is up
+const Background = lazy(() => import('./three/Background'));
 
 type Screen = 'setup' | 'game' | 'results';
 
@@ -35,6 +38,10 @@ function App() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <Background mode={currentScreen === 'game' ? 'game' : 'menu'} enabled />
+      </Suspense>
+      <div className="relative z-10">
       {currentScreen === 'setup' && <SetupScreen onStart={handleStartGame} />}
       {currentScreen === 'game' && gameSettings && (
         <GameScreen settings={gameSettings} teams={teams} onGameEnd={handleGameEnd} />
@@ -46,6 +53,7 @@ function App() {
           onBackToMenu={handleBackToMenu}
         />
       )}
+      </div>
     </>
   );
 }

@@ -34,7 +34,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 p-4 py-8">
+    <div className="min-h-screen p-4 py-8">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
           <div className="bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 p-6 md:p-8 text-center">

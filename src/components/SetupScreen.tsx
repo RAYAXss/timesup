@@ -87,7 +87,7 @@ export default function SetupScreen({ onStart }: SetupScreenProps) {
       {/* Modal règles */}
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
-      <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-sky-300 to-blue-600 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-4xl w-full my-4">
 
           {/* Titre + bouton règles */}
