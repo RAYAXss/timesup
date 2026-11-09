@@ -31,3 +31,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .title-pop, .play-pulse { animation: none; }
 }
+
+@keyframes sheet-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.sheet-up { animation: sheet-up 0.25s ease-out; }
+
+@keyframes swipe-demo {
+  0%, 15%, 100% { transform: none; }
+  35% { transform: translateX(28px) rotate(8deg); }
+  55% { transform: none; }
+  75% { transform: translateX(-28px) rotate(-8deg); }
+}
+.swipe-demo { animation: swipe-demo 3.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-up, .swipe-demo { animation: none; }
+}
