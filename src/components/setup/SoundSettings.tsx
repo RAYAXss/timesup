@@ -14,7 +14,7 @@ function Toggle({
   icon: React.ReactNode;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 bg-white/80 rounded-2xl px-4 py-3.5 cursor-pointer">
+    <label className="relative flex items-center justify-between gap-3 bg-white/80 rounded-2xl px-4 py-3.5 cursor-pointer">
       <span className="flex items-center gap-3 font-semibold text-gray-800">
         {icon}
         {label}
