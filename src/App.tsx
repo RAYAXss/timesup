@@ -86,7 +86,7 @@ function App() {
           />
         )}
         {currentScreen === 'game' && gameSettings && (
-          <GameScreen settings={gameSettings} teams={teams} onGameEnd={handleGameEnd} />
+          <GameScreen settings={gameSettings} teams={teams} onGameEnd={handleGameEnd} onQuit={handleBackToMenu} />
         )}
         {currentScreen === 'results' && (
           <ResultsScreen teams={finalTeams} roundScores={roundScores} onBackToMenu={handleBackToMenu} />
