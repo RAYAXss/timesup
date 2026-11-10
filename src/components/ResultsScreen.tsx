@@ -23,7 +23,7 @@ export default function ResultsScreen({ teams, roundScores, onBackToMenu }: Resu
       'from-orange-400 to-orange-600',
       'from-blue-400 to-blue-600',
     ];
-    return colors[index] || 'from-purple-400 to-purple-600';
+    return colors[index] || 'from-sky-300 to-sky-500';
   };
 
   const getPositionIcon = (index: number) => {

@@ -200,7 +200,7 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
             width: '100%',
           }}
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-purple-500 bg-purple-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
+          <span className="text-xs font-semibold tracking-widest uppercase text-blue-600 bg-sky-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
             Round {round} · {roundName}
           </span>
           <h2
@@ -426,7 +426,7 @@ export default function GameScreen({ settings, teams, onGameEnd, onQuit }: GameS
 
   const getRoundName = (round: number) => ['Description', 'Un seul mot', 'Mime'][round - 1] ?? `Round ${round}`;
 
-  const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#6d28d9';
+  const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#2563eb';
   const timerPct = timeLeft / settings.timePerPlayer;
 
   const renderBody = () => {
