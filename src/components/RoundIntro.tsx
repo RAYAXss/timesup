@@ -27,7 +27,7 @@ export default function RoundIntro({
   onReady,
 }: RoundIntroProps) {
   return (
-    <div className="game-bg min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-rise-in">
         {/* Bandeau manche */}
         <div className="text-center mb-4">
@@ -50,13 +50,13 @@ export default function RoundIntro({
           {/* Qui joue */}
           <div className="p-6">
             <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shrink-0">
                 <User2 className="text-white" size={24} />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">C'est au tour de</p>
                 <p className="font-bold text-gray-800 text-lg leading-tight truncate">{playerName}</p>
-                <p className="text-sm text-indigo-500 font-medium truncate">{teamName}</p>
+                <p className="text-sm text-blue-600 font-medium truncate">{teamName}</p>
               </div>
             </div>
 
@@ -67,7 +67,7 @@ export default function RoundIntro({
 
             <button
               onClick={onReady}
-              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:shadow-2xl hover:brightness-110 active:scale-[0.98] transition-all"
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:shadow-2xl hover:brightness-110 active:scale-[0.98] transition-all"
             >
               <Play size={22} fill="currentColor" />
               Prêt !

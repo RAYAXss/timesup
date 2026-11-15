@@ -1,105 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Timer, Trophy, Users } from 'lucide-react';
-import { GameSettings, Team, Card, GameState } from '../types/game';
+import { Timer, Trophy, Users, X } from 'lucide-react';
+import { GameSettings, Team, GameState } from '../types/game';
 import { cardDatabase } from '../data/cards';
 import { getRound } from '../data/rounds';
-import { useGame } from '../context/GameContext';
 import RoundIntro from './RoundIntro';
+import { nextTurn } from '../game/teams';
+import { emitFx } from '../three/fx';
+import { soundEngine } from '../game/sound';
+import { CURRENT_KEY, save } from '../game/storage';
 
 interface GameScreenProps {
   settings: GameSettings;
   teams: Team[];
+  initialState?: GameState; // resumed game from storage
   onGameEnd: (finalTeams: Team[], roundScores: number[][]) => void;
+  onQuit: () => void;
 }
-
-// ─── Web Audio Sound Engine ───────────────────────────────────────────────────
-
-function createSoundEngine() {
-  let ctx: AudioContext | null = null;
-
-  const getCtx = () => {
-    if (!ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return ctx;
-  };
-
-  const playSuccess = () => {
-    try {
-      const ac = getCtx();
-      // Joyful ascending arpeggio: C5 – E5 – G5
-      const notes = [523.25, 659.25, 783.99];
-      notes.forEach((freq, i) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ac.currentTime + i * 0.1);
-        gain.gain.setValueAtTime(0, ac.currentTime + i * 0.1);
-        gain.gain.linearRampToValueAtTime(0.25, ac.currentTime + i * 0.1 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.1 + 0.25);
-        osc.start(ac.currentTime + i * 0.1);
-        osc.stop(ac.currentTime + i * 0.1 + 0.3);
-      });
-    } catch (_) {}
-  };
-
-  const playSkip = () => {
-    try {
-      const ac = getCtx();
-      // Short descending "woosh"
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, ac.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ac.currentTime + 0.18);
-      gain.gain.setValueAtTime(0.15, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.2);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.22);
-    } catch (_) {}
-  };
-
-  const playTick = () => {
-    try {
-      const ac = getCtx();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(880, ac.currentTime);
-      gain.gain.setValueAtTime(0.08, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.07);
-    } catch (_) {}
-  };
-
-  const playTimeUp = () => {
-    try {
-      const ac = getCtx();
-      [440, 330].forEach((freq, i) => {
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, ac.currentTime + i * 0.18);
-        gain.gain.setValueAtTime(0.18, ac.currentTime + i * 0.18);
-        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.18 + 0.16);
-        osc.start(ac.currentTime + i * 0.18);
-        osc.stop(ac.currentTime + i * 0.18 + 0.18);
-      });
-    } catch (_) {}
-  };
-
-  return { playSuccess, playSkip, playTick, playTimeUp };
-}
-
-const soundEngine = createSoundEngine();
 
 // ─── Swipeable Card ──────────────────────────────────────────────────────────
 
@@ -288,7 +204,7 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
             width: '100%',
           }}
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-purple-500 bg-purple-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
+          <span className="text-xs font-semibold tracking-widest uppercase text-blue-600 bg-sky-50 px-4 py-1.5 rounded-full mb-6 sm:mb-8">
             Round {round} · {roundName}
           </span>
           <h2
@@ -326,9 +242,10 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
 
 // ─── GameScreen ───────────────────────────────────────────────────────────────
 
-function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
+export default function GameScreen({ settings, teams, initialState, onGameEnd, onQuit }: GameScreenProps) {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const totalPlayers = settings.numberOfTeams * settings.playersPerTeam;
+    if (initialState) return initialState;
+    const totalPlayers = teams.reduce((n, t) => n + t.players.length, 0);
     const deckSize = totalPlayers * 10;
     const shuffledCards = [...cardDatabase]
       .sort(() => Math.random() - 0.5)
@@ -337,7 +254,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
     return {
       teams: teams.map((team) => ({ ...team, score: 0 })),
       currentTeamIndex: 0,
-      currentPlayerIndex: 0,
+      playerIdx: teams.map(() => 0),
       currentRound: 1,
       deck: shuffledCards,
       usedCards: [],
@@ -352,10 +269,27 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [roundScore, setRoundScore] = useState(0);
+  // while the quit popup is open the countdown and timer are frozen
+  const [confirmQuit, setConfirmQuit] = useState(false);
 
   const currentTeam = gameState.teams[gameState.currentTeamIndex];
-  const currentPlayer = currentTeam.players[gameState.currentPlayerIndex];
+  const currentPlayer = currentTeam.players[gameState.playerIdx[gameState.currentTeamIndex]];
   const currentCard = gameState.deck[currentCardIndex];
+
+  // save at each turn start: a reload mid-turn replays that turn, so no half-counted points
+  useEffect(() => {
+    if (showPlayerModal) save(CURRENT_KEY, { settings, state: gameState });
+  }, [showPlayerModal, gameState, settings]);
+
+  // browser/phone back button: stay on /partie and ask before quitting
+  useEffect(() => {
+    const onBack = () => {
+      history.pushState(null, '', '/partie');
+      setConfirmQuit(true);
+    };
+    window.addEventListener('popstate', onBack);
+    return () => window.removeEventListener('popstate', onBack);
+  }, []);
 
   // ── Block body scroll while game is active ────────────────────────────────
   useEffect(() => {
@@ -374,7 +308,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
 
   // countdown
   useEffect(() => {
-    if (countdown === null) return;
+    if (countdown === null || confirmQuit) return;
     if (countdown > 0) {
       const t = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(t);
@@ -382,20 +316,21 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
       setCountdown(null);
       setIsPlaying(true);
     }
-  }, [countdown]);
+  }, [countdown, confirmQuit]);
 
   // timer + tick sound in last 10 seconds
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || confirmQuit) return;
     if (timeLeft > 0) {
       if (timeLeft <= 10) soundEngine.playTick();
       const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
       return () => clearTimeout(t);
     } else {
       soundEngine.playTimeUp();
+      emitFx('timeup');
       handleTurnEnd();
     }
-  }, [isPlaying, timeLeft]);
+  }, [isPlaying, timeLeft, confirmQuit]);
 
   const handleReady = () => {
     setShowPlayerModal(false);
@@ -430,11 +365,11 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
       updatedRoundScores[state.currentRound - 1][state.currentTeamIndex] = score;
     }
 
-    const nextTeamIndex = (state.currentTeamIndex + 1) % settings.numberOfTeams;
-    const nextPlayerIndex =
-      nextTeamIndex === 0
-        ? (state.currentPlayerIndex + 1) % settings.playersPerTeam
-        : state.currentPlayerIndex;
+    const { teamIndex: nextTeamIndex, playerIdx: nextPlayerIdx } = nextTurn(
+      state.currentTeamIndex,
+      state.playerIdx,
+      state.teams
+    );
 
     if (finalDeck.length === 0) {
       if (state.currentRound < 3) {
@@ -443,7 +378,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
           ...state,
           teams: updatedTeams,
           currentTeamIndex: nextTeamIndex,
-          currentPlayerIndex: nextPlayerIndex,
+          playerIdx: nextPlayerIdx,
           currentRound: state.currentRound + 1,
           deck: newDeck,
           usedCards: [],
@@ -462,7 +397,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
         ...state,
         teams: updatedTeams,
         currentTeamIndex: nextTeamIndex,
-        currentPlayerIndex: nextPlayerIndex,
+        playerIdx: nextPlayerIdx,
         deck: finalDeck,
         roundScores: updatedRoundScores,
       });
@@ -475,8 +410,9 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   };
 
   const handleCardSuccess = () => {
-    if (!isPlaying) return;
+    if (!isPlaying || confirmQuit) return;
     soundEngine.playSuccess(); // 🎵 arpège montant
+    emitFx('confetti');
 
     const newUsedCards = [...gameState.usedCards, currentCard];
     const newDeck = gameState.deck.filter((_, i) => i !== currentCardIndex);
@@ -496,7 +432,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   };
 
   const handleCardSkip = () => {
-    if (!isPlaying) return;
+    if (!isPlaying || confirmQuit) return;
     soundEngine.playSkip(); // 🎵 woosh descendant
 
     const newDeck = [...gameState.deck];
@@ -508,15 +444,16 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
 
   const getCardWord = () => {
     if (!currentCard) return '';
-    return currentCard[settings.difficulty] ?? currentCard.facile ?? '';
+    return currentCard[settings.difficulty] ?? '';
   };
 
   const getRoundName = (round: number) => getRound(round).short;
 
-  const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#6d28d9';
+  const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#2563eb';
   const timerPct = timeLeft / settings.timePerPlayer;
 
-  // ── Écran d'intro de manche ──
+  const renderBody = () => {
+  // ── Round intro (rule reminder + who plays) ──
   if (showPlayerModal) {
     return (
       <RoundIntro
@@ -534,8 +471,8 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   // ── Countdown ──
   if (countdown !== null) {
     return (
-      <div className="game-bg min-h-screen flex items-center justify-center">
-        <div key={countdown} className="text-white text-9xl font-black animate-pop-in drop-shadow-lg">{countdown}</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-9xl font-bold animate-pulse">{countdown}</div>
       </div>
     );
   }
@@ -543,7 +480,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
   // ── Game ──
   return (
     <div
-      className="game-bg min-h-screen p-3 sm:p-4 flex flex-col"
+      className="min-h-screen p-3 sm:p-4 pt-14 sm:pt-14 flex flex-col"
       style={{ overscrollBehavior: 'none', touchAction: 'none' }}
     >
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 gap-3 sm:gap-4">
@@ -615,7 +552,7 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
                 roundName={getRoundName(gameState.currentRound)}
                 onSuccess={handleCardSuccess}
                 onSkip={handleCardSkip}
-                disabled={!isPlaying}
+                disabled={!isPlaying || confirmQuit}
               />
             </div>
           ) : (
@@ -632,25 +569,56 @@ function GameScreenInner({ settings, teams, onGameEnd }: GameScreenProps) {
       </div>
     </div>
   );
-}
-
-/**
- * Wrapper de route : récupère la partie active depuis le contexte.
- * Si aucune partie n'est en cours (accès direct à /game, rechargement…),
- * on renvoie l'utilisateur vers le menu.
- */
-export default function GameScreen() {
-  const { settings, teams, endGame } = useGame();
-  const navigate = useNavigate();
-
-  if (!settings || teams.length === 0) {
-    return <Navigate to="/menu" replace />;
-  }
-
-  const handleGameEnd = (finalTeams: Team[], roundScores: number[][]) => {
-    endGame(finalTeams, roundScores);
-    navigate('/results');
   };
 
-  return <GameScreenInner settings={settings} teams={teams} onGameEnd={handleGameEnd} />;
+  return (
+    <>
+      <button
+        onClick={() => setConfirmQuit(true)}
+        aria-label="Quitter la partie"
+        className="fixed top-3 left-3 z-40 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-600 hover:text-red-500 active:scale-95 transition-all"
+      >
+        <X size={22} />
+      </button>
+
+      {confirmQuit && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setConfirmQuit(false)}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="quit-title"
+            className="sheet-up bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-5xl mb-3">⏸️</div>
+            <h2 id="quit-title" className="text-xl font-black text-gray-800 mb-2">
+              Êtes-vous sûr de vouloir quitter la partie ?
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">Les scores de cette partie seront perdus.</p>
+            <div className="flex gap-3">
+              <button
+                autoFocus
+                onClick={() => setConfirmQuit(false)}
+                className="flex-1 py-3 rounded-2xl font-bold bg-gray-100 text-gray-700 active:scale-95 transition-transform"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={onQuit}
+                className="flex-1 py-3 rounded-2xl font-bold bg-gradient-to-r from-red-500 to-red-600 text-white active:scale-95 transition-transform"
+              >
+                Quitter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renderBody()}
+    </>
+  );
 }

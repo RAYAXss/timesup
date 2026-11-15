@@ -28,7 +28,7 @@ export const ROUNDS: RoundInfo[] = [
     title: 'Un seul mot',
     emoji: '🤫',
     rule: "Un SEUL mot autorisé par carte pour faire deviner. Choisis-le bien ! (mêmes cartes qu'au round 1)",
-    accent: 'from-sky-400 to-indigo-500',
+    accent: 'from-sky-400 to-blue-600',
   },
   {
     round: 3,
@@ -36,7 +36,7 @@ export const ROUNDS: RoundInfo[] = [
     title: 'Mime !',
     emoji: '🙌',
     rule: "Aucun son, aucun mot : uniquement les gestes et le mime. Toujours les mêmes cartes !",
-    accent: 'from-fuchsia-500 to-pink-500',
+    accent: 'from-rose-500 to-pink-500',
   },
 ];
 
