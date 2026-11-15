@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Timer, Trophy, Users, X } from 'lucide-react';
 import { GameSettings, Team, GameState } from '../types/game';
 import { cardDatabase } from '../data/cards';
+import { getRound } from '../data/rounds';
+import RoundIntro from './RoundIntro';
 import { nextTurn } from '../game/teams';
 import { emitFx } from '../three/fx';
 import { soundEngine } from '../game/sound';
@@ -451,32 +453,18 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
   const timerPct = timeLeft / settings.timePerPlayer;
 
   const renderBody = () => {
-  // ── Player modal ──
+  // ── Round intro (rule reminder + who plays) ──
   if (showPlayerModal) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full text-center">
-          <div className="mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-blue-600 rounded-full mx-auto flex items-center justify-center mb-4">
-              <Users className="text-white" size={36} />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">À ton tour !</h2>
-            <p className="text-lg sm:text-xl text-blue-600 font-semibold mb-1">{currentPlayer.name}</p>
-            <p className="text-gray-600">{currentTeam.name}</p>
-          </div>
-          <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-4 mb-6">
-            <p className="text-sm text-gray-600 mb-2">Round {gameState.currentRound}/3</p>
-            <p className="text-lg font-semibold text-gray-800">{getRoundName(gameState.currentRound)}</p>
-            <p className="text-sm text-gray-600 mt-2">{gameState.deck.length} cartes restantes</p>
-          </div>
-          <button
-            onClick={handleReady}
-            className="w-full bg-gradient-to-r from-yellow-400 via-sky-400 to-blue-600 text-white py-4 rounded-2xl font-bold text-xl hover:shadow-2xl active:scale-95 transition-all duration-200"
-          >
-            Prêt !
-          </button>
-        </div>
-      </div>
+      <RoundIntro
+        roundInfo={getRound(gameState.currentRound)}
+        totalRounds={3}
+        playerName={currentPlayer.name}
+        teamName={currentTeam.name}
+        cardsRemaining={gameState.deck.length}
+        isNewRound={isNewRound}
+        onReady={handleReady}
+      />
     );
   }
 
