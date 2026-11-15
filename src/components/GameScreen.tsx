@@ -261,6 +261,7 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
   });
 
   const [showPlayerModal, setShowPlayerModal] = useState(true);
+  const [isNewRound, setIsNewRound] = useState(true);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(settings.timePerPlayer);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -384,6 +385,7 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
         setCurrentCardIndex(0);
         setRoundScore(0);
         setTimeLeft(settings.timePerPlayer);
+        setIsNewRound(true);
         setShowPlayerModal(true);
       } else {
         onGameEnd(updatedTeams, updatedRoundScores);
@@ -400,6 +402,7 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
       setCurrentCardIndex(0);
       setRoundScore(0);
       setTimeLeft(settings.timePerPlayer);
+      setIsNewRound(false);
       setShowPlayerModal(true);
     }
   };
@@ -442,7 +445,7 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
     return currentCard[settings.difficulty] ?? '';
   };
 
-  const getRoundName = (round: number) => ['Description', 'Un seul mot', 'Mime'][round - 1] ?? `Round ${round}`;
+  const getRoundName = (round: number) => getRound(round).short;
 
   const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 20 ? '#f97316' : '#2563eb';
   const timerPct = timeLeft / settings.timePerPlayer;
@@ -570,7 +573,7 @@ export default function GameScreen({ settings, teams, initialState, onGameEnd, o
         </div>
 
         {/* Footer info */}
-        <div className="text-center text-white/80 text-xs sm:text-sm pb-2">
+        <div className="text-center text-white/70 text-xs sm:text-sm pb-2">
           {gameState.deck.length} carte{gameState.deck.length > 1 ? 's' : ''} restante{gameState.deck.length > 1 ? 's' : ''}
           &nbsp;·&nbsp;
           <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-xs">←→</kbd> clavier aussi
