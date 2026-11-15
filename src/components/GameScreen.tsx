@@ -5,10 +5,12 @@ import { cardDatabase } from '../data/cards';
 import { nextTurn } from '../game/teams';
 import { emitFx } from '../three/fx';
 import { soundEngine } from '../game/sound';
+import { CURRENT_KEY, save } from '../game/storage';
 
 interface GameScreenProps {
   settings: GameSettings;
   teams: Team[];
+  initialState?: GameState; // resumed game from storage
   onGameEnd: (finalTeams: Team[], roundScores: number[][]) => void;
   onQuit: () => void;
 }
@@ -238,8 +240,9 @@ function SwipeCard({ word, round, roundName, onSuccess, onSkip, disabled }: Swip
 
 // ─── GameScreen ───────────────────────────────────────────────────────────────
 
-export default function GameScreen({ settings, teams, onGameEnd, onQuit }: GameScreenProps) {
+export default function GameScreen({ settings, teams, initialState, onGameEnd, onQuit }: GameScreenProps) {
   const [gameState, setGameState] = useState<GameState>(() => {
+    if (initialState) return initialState;
     const totalPlayers = teams.reduce((n, t) => n + t.players.length, 0);
     const deckSize = totalPlayers * 10;
     const shuffledCards = [...cardDatabase]
@@ -269,6 +272,21 @@ export default function GameScreen({ settings, teams, onGameEnd, onQuit }: GameS
   const currentTeam = gameState.teams[gameState.currentTeamIndex];
   const currentPlayer = currentTeam.players[gameState.playerIdx[gameState.currentTeamIndex]];
   const currentCard = gameState.deck[currentCardIndex];
+
+  // save at each turn start: a reload mid-turn replays that turn, so no half-counted points
+  useEffect(() => {
+    if (showPlayerModal) save(CURRENT_KEY, { settings, state: gameState });
+  }, [showPlayerModal, gameState, settings]);
+
+  // browser/phone back button: stay on /partie and ask before quitting
+  useEffect(() => {
+    const onBack = () => {
+      history.pushState(null, '', '/partie');
+      setConfirmQuit(true);
+    };
+    window.addEventListener('popstate', onBack);
+    return () => window.removeEventListener('popstate', onBack);
+  }, []);
 
   // ── Block body scroll while game is active ────────────────────────────────
   useEffect(() => {

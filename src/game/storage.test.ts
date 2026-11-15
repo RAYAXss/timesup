@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { load, save, isAppSettings, isGameSetup, DEFAULT_APP_SETTINGS, GameSetup } from './storage';
+import { load, save, isAppSettings, isGameSetup, isSavedGame, DEFAULT_APP_SETTINGS, GameSetup, SavedGame } from './storage';
 import { defaultTeams } from './teams';
 
 const store = new Map<string, string>();
@@ -12,6 +12,32 @@ beforeEach(() => {
 });
 
 const fallback: GameSetup = { teams: defaultTeams(), difficulty: 'moyen', timePerPlayer: 30 };
+
+describe('isSavedGame', () => {
+  const teams = defaultTeams().map((t) => ({ ...t, score: 3 }));
+  const valid: SavedGame = {
+    settings: { difficulty: 'moyen', timePerPlayer: 30 },
+    state: {
+      teams,
+      currentTeamIndex: 1,
+      playerIdx: teams.map(() => 0),
+      currentRound: 2,
+      deck: [{ id: 1, facile: 'a', moyen: 'b', difficile: 'c' }],
+      usedCards: [],
+      roundScores: [[3, 3], [], []],
+    },
+  };
+
+  it('accepts a saved game', () => {
+    expect(isSavedGame(JSON.parse(JSON.stringify(valid)))).toBe(true);
+  });
+
+  it('rejects out-of-range indexes and empty decks', () => {
+    expect(isSavedGame({ ...valid, state: { ...valid.state, currentTeamIndex: 9 } })).toBe(false);
+    expect(isSavedGame({ ...valid, state: { ...valid.state, playerIdx: teams.map(() => 99) } })).toBe(false);
+    expect(isSavedGame({ ...valid, state: { ...valid.state, deck: [] } })).toBe(false);
+  });
+});
 
 describe('storage', () => {
   it('returns fallback on invalid JSON', () => {

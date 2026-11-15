@@ -1,7 +1,14 @@
-import { AppSettings, Difficulty, Team } from '../types/game';
+import { AppSettings, Difficulty, GameSettings, GameState, Team } from '../types/game';
 
 export const APP_KEY = 'timesup.app';
 export const GAME_KEY = 'timesup.game';
+export const CURRENT_KEY = 'timesup.current';
+
+// game in progress, saved at the start of each turn so a reload can resume it
+export interface SavedGame {
+  settings: GameSettings;
+  state: GameState;
+}
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   soundOn: true,
@@ -50,6 +57,40 @@ export function isGameSetup(v: unknown): v is GameSetup {
     DIFFICULTIES.includes(v.difficulty as Difficulty) &&
     TIME_CHOICES.includes(v.timePerPlayer as number)
   );
+}
+
+export function isSavedGame(v: unknown): v is SavedGame {
+  if (!isObj(v) || !isObj(v.settings) || !isObj(v.state)) return false;
+  const s = v.settings;
+  const g = v.state;
+  if (!Array.isArray(g.teams) || !g.teams.every((t) => isTeam(t) && typeof t.score === 'number')) return false;
+  const teams = g.teams as Team[];
+  return (
+    DIFFICULTIES.includes(s.difficulty as Difficulty) &&
+    TIME_CHOICES.includes(s.timePerPlayer as number) &&
+    teams.length >= 2 &&
+    Number.isInteger(g.currentTeamIndex) &&
+    (g.currentTeamIndex as number) >= 0 &&
+    (g.currentTeamIndex as number) < teams.length &&
+    Array.isArray(g.playerIdx) &&
+    g.playerIdx.length === teams.length &&
+    g.playerIdx.every((i, k) => Number.isInteger(i) && i >= 0 && i < teams[k].players.length) &&
+    [1, 2, 3].includes(g.currentRound as number) &&
+    Array.isArray(g.deck) &&
+    g.deck.length > 0 &&
+    g.deck.every(isObj) &&
+    Array.isArray(g.usedCards) &&
+    Array.isArray(g.roundScores) &&
+    g.roundScores.length === 3
+  );
+}
+
+export function remove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // storage blocked: nothing to remove
+  }
 }
 
 export function load<T>(key: string, fallback: T, isValid: (v: unknown) => v is T): T {

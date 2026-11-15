@@ -9,7 +9,7 @@ import { canStart } from '../../game/teams';
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-gradient-to-r from-yellow-50 to-sky-50 rounded-2xl p-6">
+    <div className="bg-sky-50 border border-sky-100 rounded-2xl p-6">
       <div className="flex items-center gap-3 mb-4">
         {icon}
         <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
@@ -30,7 +30,7 @@ export default function DesktopSetup(props: SetupProps) {
       {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 max-w-4xl w-full my-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full my-4">
           <div className="flex items-start justify-between mb-2 gap-3">
             <h1 className="title-pop text-5xl font-black bg-gradient-to-r from-yellow-500 to-blue-600 bg-clip-text text-transparent">
               Time's Up!
